@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0b0f14" />
 
-  <title>ESP32 P - Mini Robot</title>
+  <title>ESP32 P - Mini Robot | PC Only</title>
 
   <style>
     :root {
@@ -210,8 +210,9 @@
   <h1>🤖 ESP32 P</h1>
 
   <div class="subtitle">
-    Mini Robot Control
+    Mini Robot Control • PC Only
   </div>
+
 
   <!-- ================================================= -->
   <!-- ESP32 BLE -->
@@ -238,8 +239,9 @@
     </div>
 
     <div class="hint">
-      Select <b>ESP32 Robot Control</b>.
-      Your phone's <b>ESP32 P</b> Bluetooth connection is for audio.
+      This PC handles <b>both control and audio</b>.
+      Use <b>ESP32 Robot Control</b> for BLE commands
+      and <b>ESP32 P</b> as the PC's Bluetooth audio output.
     </div>
 
   </div>
@@ -276,6 +278,7 @@
       <b>Play music</b>,
       or
       <b>Pause music</b>.
+      All commands come from this PC's microphone.
     </div>
 
   </div>
@@ -333,7 +336,7 @@
   <div class="card">
 
     <div class="title">
-      Music
+      PC audio
     </div>
 
     <div
@@ -347,7 +350,7 @@
       id="artist"
       class="artist"
     >
-      Waiting for phone music metadata...
+      Waiting for PC music metadata...
     </div>
 
     <div
@@ -362,6 +365,13 @@
       class="lyrics"
     >
       Lyrics will appear here
+    </div>
+
+    <div class="hint">
+      In Windows, set your PC sound output to
+      <b>ESP32 P</b>.
+      Music from this PC will play through the robot speaker.
+      The phone is not used.
     </div>
 
   </div>
@@ -598,6 +608,7 @@ async function () {
       "Opening Bluetooth device picker..."
     );
 
+
     bluetoothDevice =
       await navigator.bluetooth.requestDevice({
 
@@ -610,6 +621,7 @@ async function () {
         ]
 
       });
+
 
     log(
       "Found: " +
@@ -624,6 +636,7 @@ async function () {
       await bluetoothDevice
         .gatt
         .connect();
+
 
     log(
       "GATT connected"
@@ -690,7 +703,6 @@ async function () {
     log(
       "BLE command channel ready."
     );
-
 
   }
   catch (error) {
@@ -1032,6 +1044,24 @@ if (
       "SPEECH ERROR → " +
       event.error
     );
+
+    if (
+      event.error === "not-allowed"
+    ) {
+
+      setStatus(
+        "❌ Microphone permission denied"
+      );
+    }
+
+    if (
+      event.error === "audio-capture"
+    ) {
+
+      setStatus(
+        "❌ Laptop microphone unavailable"
+      );
+    }
   };
 
 
@@ -1046,7 +1076,9 @@ if (
         function () {
 
           try {
+
             recognition.start();
+
           }
           catch (_) {}
 
@@ -1093,7 +1125,9 @@ async function () {
 
 
     try {
+
       recognition.stop();
+
     }
     catch (_) {}
 
@@ -1115,13 +1149,17 @@ async function () {
       "Microphone stopped"
     );
 
+    log(
+      "Laptop microphone stopped."
+    );
+
     return;
   }
 
 
   try {
 
-    // Explicitly request laptop mic
+    // Request the PC/laptop microphone
     const stream =
       await navigator
         .mediaDevices
@@ -1135,7 +1173,7 @@ async function () {
     );
 
 
-    // Permission check complete
+    // Permission test complete
     stream
       .getTracks()
       .forEach(
@@ -1267,7 +1305,7 @@ function handleESP32Event(
 
 
   // ---------------------------------------------
-  // OTHER EVENT
+  // PLAYING
   // ---------------------------------------------
 
   if (
@@ -1276,6 +1314,38 @@ function handleESP32Event(
 
     setStatus(
       "🎵 Music playing"
+    );
+
+    return;
+  }
+
+
+  // ---------------------------------------------
+  // PAUSED
+  // ---------------------------------------------
+
+  if (
+    value === "PAUSED"
+  ) {
+
+    setStatus(
+      "⏸️ Music paused"
+    );
+
+    return;
+  }
+
+
+  // ---------------------------------------------
+  // HII
+  // ---------------------------------------------
+
+  if (
+    value === "HII_DONE"
+  ) {
+
+    setStatus(
+      "👋 Hii response complete"
     );
 
     return;
@@ -1396,7 +1466,6 @@ async function getLyrics(
         lyricsBox.textContent =
           "🎵 Synced lyrics ready";
 
-
         return;
       }
 
@@ -1510,7 +1579,6 @@ async function getLyrics(
 
       lyricsBox.textContent =
         "🎵 Synced lyrics ready";
-
 
       return;
     }
@@ -1763,7 +1831,7 @@ window.addEventListener(
   function () {
 
     log(
-      "ESP32 P web controller loaded."
+      "ESP32 P PC-only web controller loaded."
     );
 
     if (
