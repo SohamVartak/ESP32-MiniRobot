@@ -1,1 +1,1786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b0f14" />
 
+  <title>ESP32 P - Mini Robot</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090d12;
+      --card: #141a22;
+      --line: #283240;
+      --text: #eef2f6;
+      --muted: #97a4b3;
+      --blue: #2f8cff;
+      --green: #18b568;
+      --red: #e34b4b;
+      --dark: #2b3440;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(
+          circle at top,
+          #182533 0%,
+          #090d12 48%
+        );
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .container {
+      width: min(94%, 620px);
+      margin: auto;
+      padding: 24px 0 40px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 5px 0 3px;
+      font-size: 30px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: rgba(20, 26, 34, 0.97);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      margin: 14px 0;
+    }
+
+    .title {
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      margin: 6px 0;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .blue {
+      background: var(--blue);
+    }
+
+    .green {
+      background: var(--green);
+    }
+
+    .red {
+      background: var(--red);
+    }
+
+    .dark {
+      background: var(--dark);
+    }
+
+    .status {
+      margin-top: 10px;
+      padding: 12px;
+      text-align: center;
+      border-radius: 10px;
+      background: #0d131a;
+      border: 1px solid var(--line);
+      font-weight: 700;
+    }
+
+    .heard {
+      text-align: center;
+      font-size: 23px;
+      font-weight: 700;
+      min-height: 30px;
+      margin-top: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 480px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      margin: 5px 0;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0e141b;
+      color: white;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--blue);
+    }
+
+    .song {
+      font-size: 20px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .artist {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .lyrics {
+      margin-top: 14px;
+      padding: 16px;
+      min-height: 70px;
+      border-radius: 12px;
+      background: #0d131a;
+      text-align: center;
+      font-size: 20px;
+      line-height: 1.5;
+    }
+
+    .time {
+      text-align: center;
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 7px;
+    }
+
+    .log {
+      max-height: 280px;
+      overflow-y: auto;
+      background: #080b10;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 9px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>🤖 ESP32 P</h1>
+
+  <div class="subtitle">
+    Mini Robot Control
+  </div>
+
+  <!-- ================================================= -->
+  <!-- ESP32 BLE -->
+  <!-- ================================================= -->
+
+  <div class="card">
+
+    <div class="title">
+      Robot connection
+    </div>
+
+    <button
+      id="connectBtn"
+      class="blue"
+    >
+      CONNECT ESP32 ROBOT
+    </button>
+
+    <div
+      id="status"
+      class="status"
+    >
+      Not connected
+    </div>
+
+    <div class="hint">
+      Select <b>ESP32 Robot Control</b>.
+      Your phone's <b>ESP32 P</b> Bluetooth connection is for audio.
+    </div>
+
+  </div>
+
+
+  <!-- ================================================= -->
+  <!-- MICROPHONE -->
+  <!-- ================================================= -->
+
+  <div class="card">
+
+    <div class="title">
+      Laptop microphone
+    </div>
+
+    <button
+      id="micBtn"
+      class="green"
+    >
+      ENABLE LAPTOP MICROPHONE
+    </button>
+
+    <div
+      id="heard"
+      class="heard"
+    >
+      Waiting...
+    </div>
+
+    <div class="hint">
+      Say:
+      <b>Hii</b>,
+      <b>Display time</b>,
+      <b>Play music</b>,
+      or
+      <b>Pause music</b>.
+    </div>
+
+  </div>
+
+
+  <!-- ================================================= -->
+  <!-- QUICK TESTS -->
+  <!-- ================================================= -->
+
+  <div class="card">
+
+    <div class="title">
+      Quick tests
+    </div>
+
+    <div class="grid">
+
+      <button
+        id="hiiBtn"
+        class="dark"
+      >
+        TEST HII
+      </button>
+
+      <button
+        id="timeBtn"
+        class="dark"
+      >
+        TEST TIME
+      </button>
+
+      <button
+        id="playBtn"
+        class="green"
+      >
+        PLAY MUSIC
+      </button>
+
+      <button
+        id="pauseBtn"
+        class="red"
+      >
+        PAUSE MUSIC
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================================================= -->
+  <!-- MUSIC -->
+  <!-- ================================================= -->
+
+  <div class="card">
+
+    <div class="title">
+      Music
+    </div>
+
+    <div
+      id="song"
+      class="song"
+    >
+      No song detected
+    </div>
+
+    <div
+      id="artist"
+      class="artist"
+    >
+      Waiting for phone music metadata...
+    </div>
+
+    <div
+      id="musicTime"
+      class="time"
+    >
+      00:00
+    </div>
+
+    <div
+      id="lyrics"
+      class="lyrics"
+    >
+      Lyrics will appear here
+    </div>
+
+  </div>
+
+
+  <!-- ================================================= -->
+  <!-- MANUAL LYRICS -->
+  <!-- ================================================= -->
+
+  <div class="card">
+
+    <div class="title">
+      Lyrics test
+    </div>
+
+    <input
+      id="songInput"
+      type="text"
+      placeholder="Song title"
+    />
+
+    <input
+      id="artistInput"
+      type="text"
+      placeholder="Artist"
+    />
+
+    <button
+      id="lyricsBtn"
+      class="blue"
+    >
+      GET LYRICS
+    </button>
+
+  </div>
+
+
+  <!-- ================================================= -->
+  <!-- DEBUG -->
+  <!-- ================================================= -->
+
+  <div class="card">
+
+    <div class="title">
+      Debug
+    </div>
+
+    <div
+      id="log"
+      class="log"
+    >Ready.</div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+// =====================================================
+// BLE UUIDs
+// =====================================================
+
+const SERVICE_UUID =
+  "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+
+const COMMAND_UUID =
+  "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+
+const EVENT_UUID =
+  "beb5483e-36e1-4688-b7f5-ea07361b26a9";
+
+
+// =====================================================
+// VARIABLES
+// =====================================================
+
+let bluetoothDevice = null;
+
+let commandCharacteristic = null;
+
+let eventCharacteristic = null;
+
+let recognition = null;
+
+let listening = false;
+
+let syncedLyrics = [];
+
+let plainLyrics = [];
+
+let lastLyric = "";
+
+let currentTitle = "";
+
+let currentArtist = "";
+
+let currentPosition = 0;
+
+let trackDuration = 0;
+
+
+// =====================================================
+// ELEMENTS
+// =====================================================
+
+const connectBtn =
+  document.getElementById(
+    "connectBtn"
+  );
+
+const micBtn =
+  document.getElementById(
+    "micBtn"
+  );
+
+const hiiBtn =
+  document.getElementById(
+    "hiiBtn"
+  );
+
+const timeBtn =
+  document.getElementById(
+    "timeBtn"
+  );
+
+const playBtn =
+  document.getElementById(
+    "playBtn"
+  );
+
+const pauseBtn =
+  document.getElementById(
+    "pauseBtn"
+  );
+
+const lyricsBtn =
+  document.getElementById(
+    "lyricsBtn"
+  );
+
+const statusBox =
+  document.getElementById(
+    "status"
+  );
+
+const heardBox =
+  document.getElementById(
+    "heard"
+  );
+
+const songBox =
+  document.getElementById(
+    "song"
+  );
+
+const artistBox =
+  document.getElementById(
+    "artist"
+  );
+
+const timeBox =
+  document.getElementById(
+    "musicTime"
+  );
+
+const lyricsBox =
+  document.getElementById(
+    "lyrics"
+  );
+
+const logBox =
+  document.getElementById(
+    "log"
+  );
+
+
+// =====================================================
+// LOG
+// =====================================================
+
+function log(message) {
+
+  console.log(message);
+
+  logBox.textContent +=
+    "\n" + message;
+
+  logBox.scrollTop =
+    logBox.scrollHeight;
+}
+
+
+// =====================================================
+// STATUS
+// =====================================================
+
+function setStatus(message) {
+
+  statusBox.textContent =
+    message;
+}
+
+
+// =====================================================
+// BLE CONNECT
+// =====================================================
+
+connectBtn.onclick =
+async function () {
+
+  if (
+    !navigator.bluetooth
+  ) {
+
+    setStatus(
+      "❌ Web Bluetooth is not available"
+    );
+
+    log(
+      "Use Chrome or another supported Chromium browser."
+    );
+
+    return;
+  }
+
+  try {
+
+    setStatus(
+      "Searching..."
+    );
+
+    log(
+      "Opening Bluetooth device picker..."
+    );
+
+    bluetoothDevice =
+      await navigator.bluetooth.requestDevice({
+
+        filters: [
+          {
+            services: [
+              SERVICE_UUID
+            ]
+          }
+        ]
+
+      });
+
+    log(
+      "Found: " +
+      (
+        bluetoothDevice.name ||
+        "Unknown"
+      )
+    );
+
+
+    const server =
+      await bluetoothDevice
+        .gatt
+        .connect();
+
+    log(
+      "GATT connected"
+    );
+
+
+    const service =
+      await server
+        .getPrimaryService(
+          SERVICE_UUID
+        );
+
+
+    commandCharacteristic =
+      await service
+        .getCharacteristic(
+          COMMAND_UUID
+        );
+
+
+    eventCharacteristic =
+      await service
+        .getCharacteristic(
+          EVENT_UUID
+        );
+
+
+    await eventCharacteristic
+      .startNotifications();
+
+
+    eventCharacteristic
+      .addEventListener(
+        "characteristicvaluechanged",
+        handleESP32Event
+      );
+
+
+    bluetoothDevice.addEventListener(
+      "gattserverdisconnected",
+      function () {
+
+        setStatus(
+          "⚠️ ESP32 disconnected"
+        );
+
+        log(
+          "ESP32 BLE disconnected."
+        );
+
+        commandCharacteristic =
+          null;
+
+        eventCharacteristic =
+          null;
+      }
+    );
+
+
+    setStatus(
+      "✅ ESP32 ROBOT CONNECTED"
+    );
+
+    log(
+      "BLE command channel ready."
+    );
+
+
+  }
+  catch (error) {
+
+    console.error(error);
+
+    setStatus(
+      "❌ Bluetooth connection failed"
+    );
+
+    log(
+      "BLE ERROR → " +
+      error.message
+    );
+  }
+};
+
+
+// =====================================================
+// SEND COMMAND
+// =====================================================
+
+async function sendCommand(
+  command
+) {
+
+  if (
+    !commandCharacteristic
+  ) {
+
+    setStatus(
+      "Connect ESP32 first"
+    );
+
+    log(
+      "Command not sent: robot not connected."
+    );
+
+    return;
+  }
+
+
+  try {
+
+    const bytes =
+      new TextEncoder()
+        .encode(
+          command
+        );
+
+
+    await commandCharacteristic
+      .writeValue(
+        bytes
+      );
+
+
+    log(
+      "SENT → " +
+      command
+    );
+
+  }
+  catch (error) {
+
+    log(
+      "SEND ERROR → " +
+      error.message
+    );
+  }
+}
+
+
+// =====================================================
+// MANUAL BUTTONS
+// =====================================================
+
+hiiBtn.onclick =
+function () {
+
+  sendCommand(
+    "HII"
+  );
+};
+
+
+timeBtn.onclick =
+function () {
+
+  sendCurrentTime();
+};
+
+
+playBtn.onclick =
+function () {
+
+  sendCommand(
+    "PLAY"
+  );
+};
+
+
+pauseBtn.onclick =
+function () {
+
+  sendCommand(
+    "PAUSE"
+  );
+};
+
+
+// =====================================================
+// CURRENT TIME
+// =====================================================
+
+function getCurrentTime() {
+
+  const now =
+    new Date();
+
+  let hours =
+    now.getHours();
+
+  const minutes =
+    String(
+      now.getMinutes()
+    ).padStart(
+      2,
+      "0"
+    );
+
+  hours =
+    hours % 12;
+
+  if (
+    hours === 0
+  ) {
+
+    hours = 12;
+  }
+
+  return (
+    String(hours).padStart(
+      2,
+      "0"
+    ) +
+    ":" +
+    minutes
+  );
+}
+
+
+function sendCurrentTime() {
+
+  const time =
+    getCurrentTime();
+
+  sendCommand(
+    "TIME|" +
+    time
+  );
+}
+
+
+// =====================================================
+// SPEECH RECOGNITION
+// =====================================================
+
+const SpeechRecognition =
+  window.SpeechRecognition ||
+  window.webkitSpeechRecognition;
+
+
+if (
+  SpeechRecognition
+) {
+
+  recognition =
+    new SpeechRecognition();
+
+
+  recognition.lang =
+    "en-IN";
+
+
+  recognition.continuous =
+    true;
+
+
+  recognition.interimResults =
+    false;
+
+
+  recognition.maxAlternatives =
+    1;
+
+
+  recognition.onstart =
+  function () {
+
+    listening =
+      true;
+
+    micBtn.textContent =
+      "STOP MICROPHONE";
+
+    micBtn.classList.remove(
+      "green"
+    );
+
+    micBtn.classList.add(
+      "red"
+    );
+
+    setStatus(
+      "🎤 LISTENING"
+    );
+
+    log(
+      "Speech recognition started."
+    );
+  };
+
+
+  recognition.onresult =
+  async function (
+    event
+  ) {
+
+    const result =
+      event.results[
+        event.results.length - 1
+      ][0];
+
+
+    const text =
+      result.transcript
+        .toLowerCase()
+        .trim();
+
+
+    heardBox.textContent =
+      "You said: " +
+      text;
+
+
+    log(
+      "HEARD → " +
+      text
+    );
+
+
+    // -------------------------------------------
+    // HII
+    // -------------------------------------------
+
+    if (
+      text.includes("hii") ||
+      text.includes("hi") ||
+      text.includes("hello")
+    ) {
+
+      await sendCommand(
+        "HII"
+      );
+
+      return;
+    }
+
+
+    // -------------------------------------------
+    // TIME
+    // -------------------------------------------
+
+    if (
+      text.includes(
+        "display time"
+      ) ||
+      text.includes(
+        "show time"
+      ) ||
+      text.includes(
+        "what time"
+      ) ||
+      text === "time"
+    ) {
+
+      sendCurrentTime();
+
+      return;
+    }
+
+
+    // -------------------------------------------
+    // PLAY MUSIC
+    // -------------------------------------------
+
+    if (
+      text.includes(
+        "play music"
+      ) ||
+      text === "play"
+    ) {
+
+      await sendCommand(
+        "PLAY"
+      );
+
+      return;
+    }
+
+
+    // -------------------------------------------
+    // PAUSE
+    // -------------------------------------------
+
+    if (
+      text.includes(
+        "pause music"
+      ) ||
+      text === "pause"
+    ) {
+
+      await sendCommand(
+        "PAUSE"
+      );
+
+      return;
+    }
+  };
+
+
+  recognition.onerror =
+  function (
+    event
+  ) {
+
+    log(
+      "SPEECH ERROR → " +
+      event.error
+    );
+  };
+
+
+  recognition.onend =
+  function () {
+
+    if (
+      listening
+    ) {
+
+      setTimeout(
+        function () {
+
+          try {
+            recognition.start();
+          }
+          catch (_) {}
+
+        },
+        300
+      );
+    }
+  };
+
+}
+else {
+
+  log(
+    "SpeechRecognition API is unavailable."
+  );
+}
+
+
+// =====================================================
+// MICROPHONE BUTTON
+// =====================================================
+
+micBtn.onclick =
+async function () {
+
+  if (
+    !recognition
+  ) {
+
+    setStatus(
+      "Speech recognition unavailable"
+    );
+
+    return;
+  }
+
+
+  if (
+    listening
+  ) {
+
+    listening =
+      false;
+
+
+    try {
+      recognition.stop();
+    }
+    catch (_) {}
+
+
+    micBtn.textContent =
+      "ENABLE LAPTOP MICROPHONE";
+
+
+    micBtn.classList.remove(
+      "red"
+    );
+
+    micBtn.classList.add(
+      "green"
+    );
+
+
+    setStatus(
+      "Microphone stopped"
+    );
+
+    return;
+  }
+
+
+  try {
+
+    // Explicitly request laptop mic
+    const stream =
+      await navigator
+        .mediaDevices
+        .getUserMedia({
+          audio: true
+        });
+
+
+    log(
+      "🎤 Laptop microphone permission granted."
+    );
+
+
+    // Permission check complete
+    stream
+      .getTracks()
+      .forEach(
+        track =>
+          track.stop()
+      );
+
+
+    recognition.start();
+
+  }
+  catch (error) {
+
+    console.error(error);
+
+    setStatus(
+      "❌ Microphone permission failed"
+    );
+
+    log(
+      "MIC ERROR → " +
+      error.name
+    );
+  }
+};
+
+
+// =====================================================
+// ESP32 EVENTS
+// =====================================================
+
+function handleESP32Event(
+  event
+) {
+
+  const value =
+    new TextDecoder()
+      .decode(
+        event.target.value
+      );
+
+
+  log(
+    "ESP32 → " +
+    value
+  );
+
+
+  // ---------------------------------------------
+  // META|TITLE|ARTIST|DURATION
+  // ---------------------------------------------
+
+  if (
+    value.startsWith(
+      "META|"
+    )
+  ) {
+
+    const parts =
+      value.split("|");
+
+
+    currentTitle =
+      parts[1] || "";
+
+
+    currentArtist =
+      parts[2] || "";
+
+
+    trackDuration =
+      Number(
+        parts[3] || 0
+      );
+
+
+    songBox.textContent =
+      currentTitle ||
+      "Unknown song";
+
+
+    artistBox.textContent =
+      currentArtist ||
+      "Unknown artist";
+
+
+    lyricsBox.textContent =
+      "🔎 Finding lyrics...";
+
+
+    getLyrics(
+      currentTitle,
+      currentArtist
+    );
+
+    return;
+  }
+
+
+  // ---------------------------------------------
+  // POS|MILLISECONDS
+  // ---------------------------------------------
+
+  if (
+    value.startsWith(
+      "POS|"
+    )
+  ) {
+
+    currentPosition =
+      Number(
+        value.substring(
+          4
+        )
+      );
+
+
+    updateMusicTime(
+      currentPosition
+    );
+
+
+    updateSyncedLyrics(
+      currentPosition
+    );
+
+    return;
+  }
+
+
+  // ---------------------------------------------
+  // OTHER EVENT
+  // ---------------------------------------------
+
+  if (
+    value === "PLAYING"
+  ) {
+
+    setStatus(
+      "🎵 Music playing"
+    );
+
+    return;
+  }
+}
+
+
+// =====================================================
+// MUSIC TIME
+// =====================================================
+
+function updateMusicTime(
+  milliseconds
+) {
+
+  const totalSeconds =
+    Math.floor(
+      milliseconds / 1000
+    );
+
+
+  const minutes =
+    Math.floor(
+      totalSeconds / 60
+    );
+
+
+  const seconds =
+    totalSeconds % 60;
+
+
+  timeBox.textContent =
+    String(minutes).padStart(
+      2,
+      "0"
+    ) +
+    ":" +
+    String(seconds).padStart(
+      2,
+      "0"
+    );
+}
+
+
+// =====================================================
+// LYRICS LOOKUP
+// =====================================================
+
+async function getLyrics(
+  title,
+  artist
+) {
+
+  syncedLyrics = [];
+
+  plainLyrics = [];
+
+  lastLyric = "";
+
+
+  if (
+    !title
+  ) {
+
+    lyricsBox.textContent =
+      "No song title received.";
+
+    return;
+  }
+
+
+  lyricsBox.textContent =
+    "🔎 Finding lyrics...";
+
+
+  // ---------------------------------------------
+  // EXACT MATCH
+  // ---------------------------------------------
+
+  try {
+
+    const url =
+      "https://lrclib.net/api/get" +
+      "?track_name=" +
+      encodeURIComponent(
+        title
+      ) +
+      "&artist_name=" +
+      encodeURIComponent(
+        artist
+      );
+
+
+    const response =
+      await fetch(
+        url
+      );
+
+
+    if (
+      response.ok
+    ) {
+
+      const data =
+        await response.json();
+
+
+      if (
+        data.syncedLyrics
+      ) {
+
+        syncedLyrics =
+          parseLRC(
+            data.syncedLyrics
+          );
+
+
+        lyricsBox.textContent =
+          "🎵 Synced lyrics ready";
+
+
+        return;
+      }
+
+
+      if (
+        data.plainLyrics
+      ) {
+
+        plainLyrics =
+          data.plainLyrics
+            .split("\n")
+            .map(
+              line =>
+                line.trim()
+            )
+            .filter(
+              Boolean
+            );
+
+
+        if (
+          plainLyrics.length
+        ) {
+
+          lyricsBox.textContent =
+            plainLyrics[0];
+
+
+          await sendCommand(
+            "LYRIC|" +
+            plainLyrics[0]
+          );
+
+
+          return;
+        }
+      }
+    }
+
+  }
+  catch (error) {
+
+    log(
+      "Exact lyrics lookup failed."
+    );
+  }
+
+
+  // ---------------------------------------------
+  // SEARCH FALLBACK
+  // ---------------------------------------------
+
+  try {
+
+    const searchUrl =
+      "https://lrclib.net/api/search?q=" +
+      encodeURIComponent(
+        (
+          title +
+          " " +
+          artist
+        ).trim()
+      );
+
+
+    const response =
+      await fetch(
+        searchUrl
+      );
+
+
+    if (
+      !response.ok
+    ) {
+
+      lyricsBox.textContent =
+        "Lyrics not found.";
+
+      return;
+    }
+
+
+    const results =
+      await response.json();
+
+
+    if (
+      !results.length
+    ) {
+
+      lyricsBox.textContent =
+        "Lyrics not found.";
+
+      return;
+    }
+
+
+    const data =
+      results[0];
+
+
+    if (
+      data.syncedLyrics
+    ) {
+
+      syncedLyrics =
+        parseLRC(
+          data.syncedLyrics
+        );
+
+
+      lyricsBox.textContent =
+        "🎵 Synced lyrics ready";
+
+
+      return;
+    }
+
+
+    if (
+      data.plainLyrics
+    ) {
+
+      plainLyrics =
+        data.plainLyrics
+          .split("\n")
+          .map(
+            line =>
+              line.trim()
+          )
+          .filter(
+            Boolean
+          );
+
+
+      lyricsBox.textContent =
+        plainLyrics[0] ||
+        "Lyrics ready";
+
+
+      if (
+        plainLyrics[0]
+      ) {
+
+        await sendCommand(
+          "LYRIC|" +
+          plainLyrics[0]
+        );
+      }
+
+
+      return;
+    }
+
+
+    lyricsBox.textContent =
+      "Lyrics unavailable.";
+
+  }
+  catch (error) {
+
+    lyricsBox.textContent =
+      "Lyrics service error.";
+
+    log(
+      "LYRICS ERROR → " +
+      error.message
+    );
+  }
+}
+
+
+// =====================================================
+// PARSE LRC
+// =====================================================
+
+function parseLRC(
+  text
+) {
+
+  const result = [];
+
+
+  for (
+    const line of text.split("\n")
+  ) {
+
+    const match =
+      line.match(
+        /\[(\d+):(\d+(?:\.\d+)?)\](.*)/
+      );
+
+
+    if (
+      !match
+    ) {
+
+      continue;
+    }
+
+
+    const minutes =
+      Number(
+        match[1]
+      );
+
+
+    const seconds =
+      Number(
+        match[2]
+      );
+
+
+    result.push({
+
+      time:
+        minutes * 60 +
+        seconds,
+
+      text:
+        match[3].trim()
+    });
+  }
+
+
+  return result.sort(
+    (a, b) =>
+      a.time - b.time
+  );
+}
+
+
+// =====================================================
+// UPDATE SYNCED LYRICS
+// =====================================================
+
+async function updateSyncedLyrics(
+  positionMs
+) {
+
+  if (
+    !syncedLyrics.length
+  ) {
+
+    return;
+  }
+
+
+  const seconds =
+    positionMs / 1000;
+
+
+  let current =
+    "";
+
+
+  for (
+    const line of syncedLyrics
+  ) {
+
+    if (
+      seconds >=
+      line.time
+    ) {
+
+      current =
+        line.text;
+
+    }
+    else {
+
+      break;
+    }
+  }
+
+
+  if (
+    current &&
+    current !== lastLyric
+  ) {
+
+    lastLyric =
+      current;
+
+
+    lyricsBox.textContent =
+      current;
+
+
+    await sendCommand(
+      "LYRIC|" +
+      current
+    );
+  }
+}
+
+
+// =====================================================
+// MANUAL LYRICS TEST
+// =====================================================
+
+lyricsBtn.onclick =
+async function () {
+
+  const title =
+    document
+      .getElementById(
+        "songInput"
+      )
+      .value
+      .trim();
+
+
+  const artist =
+    document
+      .getElementById(
+        "artistInput"
+      )
+      .value
+      .trim();
+
+
+  if (
+    !title
+  ) {
+
+    lyricsBox.textContent =
+      "Enter a song title.";
+
+    return;
+  }
+
+
+  currentTitle =
+    title;
+
+
+  currentArtist =
+    artist;
+
+
+  songBox.textContent =
+    title;
+
+
+  artistBox.textContent =
+    artist ||
+    "Unknown artist";
+
+
+  await getLyrics(
+    title,
+    artist
+  );
+};
+
+
+// =====================================================
+// PAGE LOAD
+// =====================================================
+
+window.addEventListener(
+  "load",
+  function () {
+
+    log(
+      "ESP32 P web controller loaded."
+    );
+
+    if (
+      location.protocol !== "https:" &&
+      location.hostname !== "localhost" &&
+      location.hostname !== "127.0.0.1"
+    ) {
+
+      log(
+        "WARNING: Deploy this page over HTTPS for microphone/Bluetooth access."
+      );
+    }
+
+  }
+);
+
+</script>
+
+</body>
+</html>
